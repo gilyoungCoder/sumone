@@ -1,100 +1,143 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  View, Text, ScrollView, StyleSheet, Alert, Share, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
 import { useCoupleStore } from '../../stores/coupleStore';
+import { Header, Button, Card, Input, Divider } from '../../components/ui';
 import { Colors } from '../../constants/colors';
+import { FontSize, FontWeight } from '../../constants/typography';
+import { AnniversaryPicker } from '../../components/AnniversaryPicker';
+
+type Step = 'connect' | 'anniversary';
 
 export default function ConnectScreen() {
+  const [step, setStep] = useState<Step>('connect');
   const [inviteCode, setInviteCode] = useState('');
   const [myCode, setMyCode] = useState('');
   const [loading, setLoading] = useState(false);
+
   const user = useAuthStore((s) => s.user);
-  const { createCouple, joinCouple } = useCoupleStore();
+  const { createCouple, joinCouple, setAnniversary } = useCoupleStore();
 
   const handleCreate = async () => {
     if (!user) return;
     setLoading(true);
     const code = await createCouple(user.id);
-    setMyCode(code);
+    if (code) {
+      setMyCode(code);
+    } else {
+      Alert.alert('Error', 'Failed to generate code. Please try again.');
+    }
     setLoading(false);
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Join me on SumOne! Enter my invite code: ${myCode}`,
+      });
+    } catch {
+      // User cancelled share
+    }
+  };
+
   const handleJoin = async () => {
-    if (!user || !inviteCode) return;
+    if (!user || inviteCode.length < 6) return;
     setLoading(true);
     const { error } = await joinCouple(user.id, inviteCode);
     setLoading(false);
     if (error) {
       Alert.alert('Error', error);
     } else {
-      Alert.alert('Connected! 💕', 'You are now linked with your partner!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/home') },
-      ]);
+      setStep('anniversary');
     }
   };
 
+  const handleAnniversaryDone = async (date: string | null) => {
+    if (date) {
+      setLoading(true);
+      await setAnniversary(date);
+      setLoading(false);
+    }
+    router.replace('/(tabs)/home');
+  };
+
+  if (step === 'anniversary') {
+    return (
+      <View style={styles.container}>
+        <Header showBack onBack={() => setStep('connect')} />
+        <AnniversaryPicker
+          loading={loading}
+          onDone={handleAnniversaryDone}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Back</Text>
-      </TouchableOpacity>
+      <Header showBack onBack={() => router.back()} />
 
-      <Text style={styles.title}>Connect Partner</Text>
-      <Text style={styles.subtitle}>
-        Share your invite code or enter your partner's code
-      </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Connect Partner</Text>
+        <Text style={styles.subtitle}>
+          Share your invite code or enter your partner's code
+        </Text>
 
-      {/* Create invite code */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Create Invite Code</Text>
-        {myCode ? (
-          <View style={styles.codeBox}>
-            <Text style={styles.codeText}>{myCode}</Text>
-            <Text style={styles.codeHint}>Share this code with your partner</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleCreate}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>Generate Code</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        {/* Generate invite code section */}
+        <Card variant="warm" padding={20} style={styles.section}>
+          <Text style={styles.sectionTitle}>Create Invite Code</Text>
+          {myCode ? (
+            <View style={styles.codeDisplay}>
+              <Text style={styles.codeText}>{myCode}</Text>
+              <Text style={styles.codeHint}>Share this code with your partner</Text>
+              <Button
+                title="Share Code"
+                onPress={handleShare}
+                variant="secondary"
+                size="sm"
+                style={styles.shareButton}
+              />
+            </View>
+          ) : (
+            <Button
+              title="Generate Code"
+              onPress={handleCreate}
+              loading={loading}
+              disabled={loading}
+            />
+          )}
+        </Card>
 
-      {/* Divider */}
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.dividerLine} />
-      </View>
+        <Divider text="OR" style={styles.divider} />
 
-      {/* Join with code */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Join with Code</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter 6-digit code"
-          placeholderTextColor={Colors.textLight}
-          value={inviteCode}
-          onChangeText={(t) => setInviteCode(t.toUpperCase())}
-          maxLength={6}
-          autoCapitalize="characters"
-        />
-        <TouchableOpacity
-          style={[styles.button, styles.buttonSecondary]}
-          onPress={handleJoin}
-          disabled={loading || inviteCode.length < 6}
-        >
-          <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
-            Connect
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Join with code section */}
+        <Card padding={20} style={styles.section}>
+          <Text style={styles.sectionTitle}>Join with Code</Text>
+          <Input
+            placeholder="Enter 6-digit code"
+            value={inviteCode}
+            onChangeText={(t) => setInviteCode(t.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+            maxLength={6}
+            autoCapitalize="characters"
+            style={styles.codeInput}
+            containerStyle={styles.inputContainer}
+          />
+          <Button
+            title="Connect"
+            onPress={handleJoin}
+            variant="secondary"
+            loading={loading}
+            disabled={loading || inviteCode.length < 6}
+          />
+        </Card>
+      </ScrollView>
     </View>
   );
 }
@@ -103,99 +146,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  backButton: {
-    marginBottom: 16,
-  },
-  backText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
     color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: FontSize.md,
     color: Colors.textSecondary,
-    marginBottom: 32,
+    marginBottom: 28,
   },
   section: {
-    marginBottom: 8,
+    marginBottom: 4,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
     color: Colors.text,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  codeBox: {
-    backgroundColor: Colors.surfaceWarm,
-    borderRadius: 16,
-    padding: 24,
+  codeDisplay: {
     alignItems: 'center',
   },
   codeText: {
     fontSize: 36,
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
     color: Colors.primary,
     letterSpacing: 8,
   },
   codeHint: {
-    fontSize: 12,
+    fontSize: FontSize.sm,
     color: Colors.textSecondary,
     marginTop: 8,
   },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 24,
-    color: Colors.text,
-    textAlign: 'center',
-    letterSpacing: 8,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  buttonSecondary: {
-    backgroundColor: Colors.surface,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonTextSecondary: {
-    color: Colors.primary,
+  shareButton: {
+    marginTop: 16,
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.border,
+  codeInput: {
+    fontSize: 24,
+    textAlign: 'center',
+    letterSpacing: 8,
+    fontWeight: FontWeight.bold,
   },
-  dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 14,
-    color: Colors.textLight,
+  inputContainer: {
+    marginBottom: 8,
   },
 });

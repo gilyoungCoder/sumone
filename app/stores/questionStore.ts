@@ -2,12 +2,6 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { FALLBACK_QUESTIONS } from '../constants/questions';
 
-interface Question {
-  id: string;
-  question_text: string;
-  question_number: number;
-}
-
 interface DailyQuestion {
   id: string;
   couple_id: string;
@@ -23,20 +17,44 @@ interface DailyQuestion {
 
 interface QuestionState {
   todayQuestion: DailyQuestion | null;
+  pastQuestions: DailyQuestion[];
   loading: boolean;
   submitting: boolean;
   fetchTodayQuestion: (coupleId: string, userId: string) => Promise<void>;
   submitAnswer: (text: string, userId: string) => Promise<void>;
   fetchPartnerAnswer: (userId: string) => Promise<void>;
+  fetchPastQuestions: (coupleId: string, userId: string) => Promise<void>;
 }
 
 function getTodayDateString(): string {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
+  return new Date().toISOString().split('T')[0];
+}
+
+// Maps a raw daily_questions row into our DailyQuestion shape
+function mapDailyQuestion(
+  row: any,
+  userId: string,
+  questionText: string,
+  questionNumber: number,
+): DailyQuestion {
+  const isUser1 = row.user1_id === userId;
+  return {
+    id: row.id,
+    couple_id: row.couple_id,
+    question_id: row.question_id,
+    question_text: questionText,
+    question_number: questionNumber,
+    assigned_date: row.assigned_date,
+    my_answer: isUser1 ? row.user1_answer : row.user2_answer,
+    partner_answer: isUser1 ? row.user2_answer : row.user1_answer,
+    my_answered_at: isUser1 ? row.user1_answered_at : row.user2_answered_at,
+    partner_answered_at: isUser1 ? row.user2_answered_at : row.user1_answered_at,
+  };
 }
 
 export const useQuestionStore = create<QuestionState>((set, get) => ({
   todayQuestion: null,
+  pastQuestions: [],
   loading: false,
   submitting: false,
 
@@ -45,7 +63,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
     const today = getTodayDateString();
 
     try {
-      // 오늘 배정된 질문 조회
+      // Check if today's question already exists
       const { data: existing } = await supabase
         .from('daily_questions')
         .select('*, questions(question_text, question_number)')
@@ -54,29 +72,18 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         .single();
 
       if (existing) {
-        const question = existing.questions as unknown as Question;
-        const isUser1 = existing.user1_id === userId;
-
+        const q = existing.questions as any;
         set({
-          todayQuestion: {
-            id: existing.id,
-            couple_id: existing.couple_id,
-            question_id: existing.question_id,
-            question_text: question?.question_text ?? '',
-            question_number: question?.question_number ?? 0,
-            assigned_date: existing.assigned_date,
-            my_answer: isUser1 ? existing.user1_answer : existing.user2_answer,
-            partner_answer: isUser1 ? existing.user2_answer : existing.user1_answer,
-            my_answered_at: isUser1 ? existing.user1_answered_at : existing.user2_answered_at,
-            partner_answered_at: isUser1 ? existing.user2_answered_at : existing.user1_answered_at,
-          },
+          todayQuestion: mapDailyQuestion(
+            existing, userId,
+            q?.question_text ?? '', q?.question_number ?? 0,
+          ),
           loading: false,
         });
         return;
       }
 
-      // 오늘 질문이 없으면 새로 배정
-      // 이전에 배정된 질문 수 확인
+      // No question today - assign a new one
       const { count } = await supabase
         .from('daily_questions')
         .select('*', { count: 'exact', head: true })
@@ -84,7 +91,6 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
 
       const nextIndex = (count ?? 0) % FALLBACK_QUESTIONS.length;
 
-      // questions 테이블에서 다음 질문 가져오기
       const { data: nextQuestion } = await supabase
         .from('questions')
         .select('*')
@@ -92,7 +98,6 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         .single();
 
       if (nextQuestion) {
-        // 커플 정보 조회해서 user1_id 확인
         const { data: couple } = await supabase
           .from('couples')
           .select('user1_id, user2_id')
@@ -112,27 +117,19 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
           .single();
 
         if (newDaily) {
-          const q = newDaily.questions as unknown as Question;
+          const q = newDaily.questions as any;
           set({
-            todayQuestion: {
-              id: newDaily.id,
-              couple_id: newDaily.couple_id,
-              question_id: newDaily.question_id,
-              question_text: q?.question_text ?? '',
-              question_number: q?.question_number ?? 0,
-              assigned_date: newDaily.assigned_date,
-              my_answer: null,
-              partner_answer: null,
-              my_answered_at: null,
-              partner_answered_at: null,
-            },
+            todayQuestion: mapDailyQuestion(
+              newDaily, userId,
+              q?.question_text ?? '', q?.question_number ?? 0,
+            ),
             loading: false,
           });
           return;
         }
       }
 
-      // Supabase 질문 테이블이 비었으면 폴백 사용
+      // Fallback when questions table is empty
       set({
         todayQuestion: {
           id: 'fallback',
@@ -149,7 +146,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         loading: false,
       });
     } catch {
-      // 오프라인 폴백
+      // Offline fallback - pick question based on day of year
       const dayOfYear = Math.floor(
         (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
       );
@@ -179,7 +176,6 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
 
     set({ submitting: true });
 
-    // 현재 유저가 user1인지 user2인지 확인
     const { data: daily } = await supabase
       .from('daily_questions')
       .select('user1_id')
@@ -193,18 +189,11 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
     const now = new Date().toISOString();
     await supabase
       .from('daily_questions')
-      .update({
-        [answerField]: text,
-        [answeredAtField]: now,
-      })
+      .update({ [answerField]: text, [answeredAtField]: now })
       .eq('id', todayQuestion.id);
 
     set({
-      todayQuestion: {
-        ...todayQuestion,
-        my_answer: text,
-        my_answered_at: now,
-      },
+      todayQuestion: { ...todayQuestion, my_answer: text, my_answered_at: now },
       submitting: false,
     });
   },
@@ -228,6 +217,33 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
           partner_answered_at: isUser1 ? data.user2_answered_at : data.user1_answered_at,
         },
       });
+    }
+  },
+
+  fetchPastQuestions: async (coupleId, userId) => {
+    const today = getTodayDateString();
+
+    try {
+      const { data } = await supabase
+        .from('daily_questions')
+        .select('*, questions(question_text, question_number)')
+        .eq('couple_id', coupleId)
+        .lt('assigned_date', today)
+        .order('assigned_date', { ascending: false })
+        .limit(20);
+
+      if (data) {
+        const mapped = data.map((row: any) => {
+          const q = row.questions as any;
+          return mapDailyQuestion(
+            row, userId,
+            q?.question_text ?? '', q?.question_number ?? 0,
+          );
+        });
+        set({ pastQuestions: mapped });
+      }
+    } catch {
+      set({ pastQuestions: [] });
     }
   },
 }));

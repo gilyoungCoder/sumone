@@ -1,26 +1,37 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, StyleSheet,
   KeyboardAvoidingView, Platform, Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
+import { Button, Input } from '../../components/ui';
 import { Colors } from '../../constants/colors';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const signIn = useAuthStore((s) => s.signIn);
 
+  const validate = () => {
+    const next: typeof errors = {};
+    if (!email.trim()) next.email = 'Email is required';
+    if (!password) next.password = 'Password is required';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Oops', 'Please fill in all fields');
-      return;
-    }
+    if (!validate()) return;
+
     setLoading(true);
     const { error } = await signIn(email.trim(), password);
     setLoading(false);
+
     if (error) {
       Alert.alert('Login failed', error);
     }
@@ -36,39 +47,40 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Your story, together</Text>
 
         <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={Colors.textLight}
+          <Input
+            label="Email"
+            placeholder="you@example.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: undefined })); }}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="email"
+            error={errors.email}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={Colors.textLight}
+          <Input
+            label="Password"
+            placeholder="Your password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); }}
             secureTextEntry
+            autoComplete="password"
+            error={errors.password}
           />
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+          <Button
+            title={loading ? 'Signing in...' : 'Sign In'}
             onPress={handleLogin}
+            loading={loading}
             disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Text>
-          </TouchableOpacity>
+            size="lg"
+          />
         </View>
 
         <Link href="/(auth)/register" asChild>
           <TouchableOpacity style={styles.linkButton}>
             <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkBold}>Sign Up</Text>
+              Don't have an account?{' '}
+              <Text style={styles.linkBold}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
         </Link>
@@ -89,56 +101,31 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 42,
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
     color: Colors.primary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 48,
   },
   form: {
-    gap: 16,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
+    gap: 4,
   },
   linkButton: {
     marginTop: 24,
     alignItems: 'center',
   },
   linkText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     color: Colors.textSecondary,
   },
   linkBold: {
     color: Colors.primary,
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
 });

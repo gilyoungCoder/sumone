@@ -15,13 +15,14 @@ interface CoupleState {
   partnerName: string | null;
   loading: boolean;
   fetchCouple: (userId: string) => Promise<void>;
-  createCouple: (userId: string) => Promise<string>; // returns invite code
+  createCouple: (userId: string) => Promise<string>;
   joinCouple: (userId: string, inviteCode: string) => Promise<{ error: string | null }>;
-  setAnniversary: (date: string) => Promise<void>;
+  setAnniversary: (date: string) => Promise<{ error: string | null }>;
 }
 
+// Exclude ambiguous characters (0/O, 1/I/L) for readability
 function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   let code = '';
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -60,21 +61,27 @@ export const useCoupleStore = create<CoupleState>((set, get) => ({
   },
 
   createCouple: async (userId) => {
-    const inviteCode = generateInviteCode();
-    const { data } = await supabase
-      .from('couples')
-      .insert({ user1_id: userId, invite_code: inviteCode })
-      .select()
-      .single();
+    // Retry up to 3 times in case of invite code collision
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const inviteCode = generateInviteCode();
+      const { data, error } = await supabase
+        .from('couples')
+        .insert({ user1_id: userId, invite_code: inviteCode })
+        .select()
+        .single();
 
-    if (data) {
-      set({ couple: data });
-      await supabase
-        .from('profiles')
-        .update({ couple_id: data.id })
-        .eq('id', userId);
+      if (error?.code === '23505') continue; // unique violation, retry
+
+      if (data) {
+        set({ couple: data });
+        await supabase
+          .from('profiles')
+          .update({ couple_id: data.id })
+          .eq('id', userId);
+        return inviteCode;
+      }
     }
-    return inviteCode;
+    return '';
   },
 
   joinCouple: async (userId, inviteCode) => {
@@ -110,13 +117,16 @@ export const useCoupleStore = create<CoupleState>((set, get) => ({
 
   setAnniversary: async (date) => {
     const couple = get().couple;
-    if (!couple) return;
+    if (!couple) return { error: 'No couple found' };
 
-    await supabase
+    const { error } = await supabase
       .from('couples')
       .update({ anniversary_date: date })
       .eq('id', couple.id);
 
+    if (error) return { error: error.message };
+
     set({ couple: { ...couple, anniversary_date: date } });
+    return { error: null };
   },
 }));

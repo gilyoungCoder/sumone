@@ -1,44 +1,49 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, StyleSheet,
   KeyboardAvoidingView, Platform, Alert,
+  TouchableOpacity, ScrollView,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
-import { supabase } from '../../lib/supabase';
+import { Button, Input } from '../../components/ui';
 import { Colors } from '../../constants/colors';
+import { FontSize, FontWeight } from '../../constants/typography';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
   const signUp = useAuthStore((s) => s.signUp);
 
+  const validate = () => {
+    const next: typeof errors = {};
+    if (!name.trim()) next.name = 'Name is required';
+    if (!email.trim()) next.email = 'Email is required';
+    if (!password) next.password = 'Password is required';
+    else if (password.length < 6) next.password = 'Must be at least 6 characters';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const clearError = (field: keyof typeof errors) => {
+    setErrors((e) => ({ ...e, [field]: undefined }));
+  };
+
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Oops', 'Please fill in all fields');
-      return;
-    }
-    if (password.length < 6) {
-      Alert.alert('Oops', 'Password must be at least 6 characters');
-      return;
-    }
+    if (!validate()) return;
+
     setLoading(true);
-    const { error } = await signUp(email.trim(), password);
+    const { error } = await signUp(email.trim(), password, name.trim());
     setLoading(false);
+
     if (error) {
       Alert.alert('Sign up failed', error);
       return;
     }
-    // Create profile after signup
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        display_name: name.trim(),
-      });
-    }
+
     Alert.alert('Welcome!', 'Please check your email to verify your account.');
   };
 
@@ -47,55 +52,61 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.logo}>SumOne</Text>
         <Text style={styles.subtitle}>Start your love story</Text>
 
         <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Your name"
-            placeholderTextColor={Colors.textLight}
+          <Input
+            label="Your name"
+            placeholder="How should we call you?"
             value={name}
-            onChangeText={setName}
+            onChangeText={(t) => { setName(t); clearError('name'); }}
+            autoCapitalize="words"
+            autoComplete="name"
+            error={errors.name}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={Colors.textLight}
+          <Input
+            label="Email"
+            placeholder="you@example.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(t) => { setEmail(t); clearError('email'); }}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="email"
+            error={errors.email}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password (6+ characters)"
-            placeholderTextColor={Colors.textLight}
+          <Input
+            label="Password"
+            placeholder="6+ characters"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(t) => { setPassword(t); clearError('password'); }}
             secureTextEntry
+            autoComplete="new-password"
+            error={errors.password}
           />
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+          <Button
+            title={loading ? 'Creating account...' : 'Create Account'}
             onPress={handleRegister}
+            loading={loading}
             disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? 'Creating account...' : 'Create Account'}
-            </Text>
-          </TouchableOpacity>
+            size="lg"
+          />
         </View>
 
         <Link href="/(auth)/login" asChild>
           <TouchableOpacity style={styles.linkButton}>
             <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkBold}>Sign In</Text>
+              Already have an account?{' '}
+              <Text style={styles.linkBold}>Sign In</Text>
             </Text>
           </TouchableOpacity>
         </Link>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -106,62 +117,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingVertical: 48,
   },
   logo: {
     fontSize: 42,
-    fontWeight: '700',
+    fontWeight: FontWeight.bold,
     color: Colors.primary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: FontSize.lg,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 48,
   },
   form: {
-    gap: 16,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
+    gap: 4,
   },
   linkButton: {
     marginTop: 24,
     alignItems: 'center',
   },
   linkText: {
-    fontSize: 14,
+    fontSize: FontSize.sm,
     color: Colors.textSecondary,
   },
   linkBold: {
     color: Colors.primary,
-    fontWeight: '600',
+    fontWeight: FontWeight.semibold,
   },
 });
