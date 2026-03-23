@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SumOne</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #FF6B8A;
+            --primary-light: #FFB4C6;
+            --bg: #FFF8F0;
+            --surface: #FFFFFF;
+            --surface-warm: #FFF3E0;
+            --text: #2D2D2D;
+            --text-secondary: #8E8E8E;
+            --text-light: #BDBDBD;
+            --border: #F0E8E0;
+            --accent: #FFD54F;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== NAV ========== */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 8px 0 28px;
+            z-index: 100;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            cursor: pointer;
+            transition: color 0.2s;
+            color: var(--text-light);
+        }
+        .tab.active { color: var(--primary); }
+        .tab-icon { font-size: 24px; display: block; }
+        .tab-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+
+        /* ========== SCREENS ========== */
+        .screen { display: none; padding-bottom: 90px; min-height: 100vh; }
+        .screen.active { display: block; }
+
+        /* ========== LOGIN SCREEN ========== */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            min-height: 100vh;
+        }
+        .logo {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--primary);
+            font-style: italic;
+            font-family: Georgia, serif;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            margin-bottom: 48px;
+        }
+        .input-group { width: 100%; display: flex; flex-direction: column; gap: 16px; }
+        .input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 16px;
+            color: var(--text);
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .input:focus { border-color: var(--primary); }
+        .input::placeholder { color: var(--text-light); }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .link-text {
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .link-text span { color: var(--primary); font-weight: 600; cursor: pointer; }
+
+        /* ========== HOME SCREEN ========== */
+        .home-header {
+            text-align: right;
+            padding: 60px 24px 0;
+        }
+        .couple-names {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .couple-names .heart { color: var(--primary); }
+        .dday {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .dday-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary);
+            font-style: italic;
+            font-family: Georgia, serif;
+        }
+        .pet-room {
+            margin: 20px 24px;
+            background: var(--surface-warm);
+            border-radius: 24px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Gingham pattern */
+        .pet-room::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                repeating-linear-gradient(0deg, rgba(255,200,150,0.15) 0px, rgba(255,200,150,0.15) 20px, transparent 20px, transparent 40px),
+                repeating-linear-gradient(90deg, rgba(255,200,150,0.15) 0px, rgba(255,200,150,0.15) 20px, transparent 20px, transparent 40px);
+        }
+        .pet-character {
+            font-size: 100px;
+            animation: bounce 1.5s ease-in-out infinite alternate;
+            z-index: 1;
+            filter: drop-shadow(0 8px 12px rgba(255,107,138,0.3));
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-12px); }
+        }
+        .speech-bubble {
+            background: white;
+            border-radius: 16px;
+            padding: 10px 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            z-index: 1;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid white;
+        }
+        .room-decor {
+            position: absolute;
+            font-size: 28px;
+            z-index: 1;
+        }
+        .decor-1 { top: 20%; right: 15%; font-size: 22px; }
+        .decor-2 { top: 30%; right: 10%; font-size: 18px; }
+        .decor-3 { bottom: 25%; left: 12%; font-size: 32px; }
+        .home-message {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 0 24px;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 56px 20px 0;
+        }
+        .coins { font-size: 14px; color: var(--text-secondary); }
+        .top-icons { display: flex; gap: 16px; font-size: 20px; }
+
+        /* ========== QUESTIONS SCREEN ========== */
+        .q-header {
+            text-align: center;
+            padding: 60px 24px 0;
+        }
+        .q-logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            font-style: italic;
+            font-family: Georgia, serif;
+        }
+        .q-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+        .q-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 28px;
+            margin: 0 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .hearts-row { font-size: 32px; margin-bottom: 16px; }
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+        .q-meta {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 16px;
+        }
+        .answer-section {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px 24px 0;
+            border: 1px solid var(--border);
+        }
+        .answer-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .answer-text { font-size: 15px; line-height: 1.5; }
+        .answer-locked {
+            font-size: 14px;
+            color: var(--text-light);
+            font-style: italic;
+        }
+        .blurred { opacity: 0.4; filter: blur(2px); }
+        .q-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            padding: 20px 24px;
+        }
+        .btn-outline {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* ========== PROFILE SCREEN ========== */
+        .profile-header {
+            padding: 60px 24px 0;
+            font-size: 28px;
+            font-weight: 700;
+            font-style: italic;
+            font-family: Georgia, serif;
+        }
+        .profile-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .avatar { font-size: 48px; margin-bottom: 12px; }
+        .email { font-size: 16px; font-weight: 500; }
+        .couple-status { font-size: 14px; color: var(--primary); margin-top: 8px; }
+        .menu {
+            background: var(--surface);
+            border-radius: 20px;
+            margin: 0 24px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 16px;
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-value { color: var(--text-secondary); font-size: 14px; }
+        .signout {
+            text-align: center;
+            padding: 20px;
+            color: #FF5252;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .version {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 16px;
+        }
+
+        /* ========== MOOD PICKER ========== */
+        .mood-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .mood-overlay.active { display: flex; }
+        .mood-sheet {
+            background: var(--bg);
+            border-radius: 24px 24px 0 0;
+            width: 100%;
+            max-width: 430px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .mood-title {
+            text-align: center;
+            font-family: Georgia, serif;
+            font-style: italic;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .mood-sub {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .mood-cell {
+            text-align: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 16px;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .mood-cell:active { background: rgba(255,107,138,0.1); }
+        .mood-cell.selected { background: rgba(255,107,138,0.15); outline: 2px solid var(--primary); }
+        .mood-cell.locked { opacity: 0.5; }
+        .mood-heart { font-size: 48px; display: block; margin-bottom: 4px; }
+        .mood-label { font-size: 11px; color: var(--text-secondary); }
+        .lock-badge {
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mood-close {
+            text-align: center;
+            padding: 14px;
+            font-size: 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== LOGIN SCREEN ========== -->
+    <div id="login-screen" class="screen active">
+        <div class="logo">SumOne</div>
+        <div class="subtitle">Your story, together</div>
+        <div class="input-group">
+            <input class="input" type="email" placeholder="Email">
+            <input class="input" type="password" placeholder="Password">
+            <button class="btn-primary" onclick="showScreen('home')">Sign In</button>
+        </div>
+        <div class="link-text">Don't have an account? <span onclick="showScreen('home')">Sign Up</span></div>
+    </div>
+
+    <!-- ========== HOME SCREEN ========== -->
+    <div id="home-screen" class="screen">
+        <div class="top-bar">
+            <div class="coins">🪨 1225 &nbsp; 💗 0</div>
+            <div class="top-icons">
+                <span>😊</span>
+                <span>✈️</span>
+                <span>🔔</span>
+            </div>
+        </div>
+        <div class="home-header">
+            <div class="couple-names">You <span class="heart">❤️</span> Partner</div>
+            <div class="dday">Day <span class="dday-number">1</span></div>
+        </div>
+        <div class="pet-room" onclick="openMood()">
+            <span class="room-decor decor-1">🖼️</span>
+            <span class="room-decor decor-2">📮</span>
+            <span class="room-decor decor-3">🏕️</span>
+            <div class="speech-bubble" id="pet-message">Have a wonderful day! ☀️</div>
+            <div class="pet-character">💗</div>
+        </div>
+        <div class="home-message">Tap the room to set today's mood!</div>
+    </div>
+
+    <!-- ========== QUESTIONS SCREEN ========== -->
+    <div id="questions-screen" class="screen">
+        <div class="q-header">
+            <div class="q-logo">SumOne</div>
+            <div class="q-sub">Daily Question</div>
+        </div>
+        <div class="q-card">
+            <div class="hearts-row">❤️ 🤍</div>
+            <div class="question-text">What's one small thing your partner does that always makes you smile?</div>
+            <div class="q-meta">#1 Question · 2026.03.23</div>
+        </div>
+        <div class="answer-section">
+            <div class="answer-name">You</div>
+            <div class="answer-text">When they make me coffee in the morning without me asking 🥰</div>
+        </div>
+        <div class="answer-section blurred">
+            <div class="answer-name">Partner</div>
+            <div class="answer-locked">Answer first to see your partner's response</div>
+        </div>
+        <div class="q-buttons">
+            <button class="btn-outline">Nudge 👈</button>
+            <button class="btn-outline">Chat about this 💬</button>
+        </div>
+    </div>
+
+    <!-- ========== PROFILE SCREEN ========== -->
+    <div id="profile-screen" class="screen">
+        <div class="profile-header">My Page</div>
+        <div class="profile-card">
+            <div class="avatar">😊</div>
+            <div class="email">you@example.com</div>
+            <div class="couple-status">❤️ Connected with Partner</div>
+        </div>
+        <div class="menu">
+            <div class="menu-item"><span>Couple Connection</span><span class="menu-value">Connected</span></div>
+            <div class="menu-item"><span>Anniversary</span><span class="menu-value">Mar 23, 2026</span></div>
+            <div class="menu-item"><span>Notifications</span><span class="menu-value">Coming soon</span></div>
+            <div class="menu-item"><span>Language</span><span class="menu-value">English</span></div>
+        </div>
+        <div class="signout" onclick="showScreen('login')">Sign Out</div>
+        <div class="version">Sumone v1.0.0 (MVP)</div>
+    </div>
+
+    <!-- ========== MOOD PICKER ========== -->
+    <div class="mood-overlay" id="mood-overlay" onclick="closeMood(event)">
+        <div class="mood-sheet" onclick="event.stopPropagation()">
+            <div class="mood-title">Sumone</div>
+            <div class="mood-sub">How are you feeling today?</div>
+            <div class="mood-grid">
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">😍</span><span class="mood-label">In Love</span></div>
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">😊</span><span class="mood-label">Happy</span></div>
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">🤔</span><span class="mood-label">Curious</span></div>
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">😢</span><span class="mood-label">Sad</span></div>
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">😭</span><span class="mood-label">Crying</span></div>
+                <div class="mood-cell" onclick="selectMood(this)"><span class="mood-heart">😈</span><span class="mood-label">Mischievous</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">😜</span><span class="mood-label">Playful</span><span class="lock-badge">🔒</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">🤩</span><span class="mood-label">Excited</span><span class="lock-badge">🔒</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">😰</span><span class="mood-label">Anxious</span><span class="lock-badge">🔒</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">🤢</span><span class="mood-label">Sick</span><span class="lock-badge">🔒</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">😤</span><span class="mood-label">Annoyed</span><span class="lock-badge">🔒</span></div>
+                <div class="mood-cell locked"><span class="mood-heart">🤬</span><span class="mood-label">Angry</span><span class="lock-badge">🔒</span></div>
+            </div>
+            <div class="mood-close" onclick="closeMood()">Close</div>
+        </div>
+    </div>
+
+    <!-- ========== TAB BAR ========== -->
+    <div class="tab-bar" id="tab-bar" style="display:none;">
+        <div class="tab active" onclick="showTab('home')">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">Home</span>
+        </div>
+        <div class="tab" onclick="showTab('questions')">
+            <span class="tab-icon">💌</span>
+            <span class="tab-label">Q&A</span>
+        </div>
+        <div class="tab" onclick="showTab('profile')">
+            <span class="tab-icon">👤</span>
+            <span class="tab-label">My</span>
+        </div>
+    </div>
+
+    <script>
+        const messages = [
+            "Have a wonderful day! ☀️",
+            "I love seeing you two together 💕",
+            "Don't forget to tell them you love them!",
+            "You two are the cutest! 🥰",
+            "Send your partner a sweet message!",
+            "Today is a great day to make memories!",
+            "Remember why you fell in love 💗",
+            "Every day with you is special!",
+        ];
+        let msgIdx = 0;
+
+        setInterval(() => {
+            msgIdx = (msgIdx + 1) % messages.length;
+            const el = document.getElementById('pet-message');
+            el.style.opacity = 0;
+            setTimeout(() => {
+                el.textContent = messages[msgIdx];
+                el.style.opacity = 1;
+            }, 300);
+        }, 4000);
+
+        // D-day counter
+        const startDate = new Date('2026-03-23');
+        const today = new Date();
+        const diff = Math.floor((today - startDate) / (1000*60*60*24)) + 1;
+        document.querySelector('.dday-number').textContent = diff > 0 ? diff : 1;
+
+        var currentTab = 'home';
+
+        function showScreen(name) {
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
+            }
+            document.getElementById(name + '-screen').classList.add('active');
+            document.getElementById('tab-bar').style.display = name === 'login' ? 'none' : 'flex';
+            if (name !== 'login') {
+                currentTab = name;
+                highlightTab(name);
+            }
+        }
+
+        function showTab(name) {
+            currentTab = name;
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
+            }
+            document.getElementById(name + '-screen').classList.add('active');
+            highlightTab(name);
+        }
+
+        function highlightTab(name) {
+            var tabs = document.querySelectorAll('.tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            var idx = name === 'home' ? 0 : name === 'questions' ? 1 : 2;
+            tabs[idx].classList.add('active');
+        }
+
+        function openMood() {
+            document.getElementById('mood-overlay').classList.add('active');
+        }
+
+        function closeMood() {
+            document.getElementById('mood-overlay').classList.remove('active');
+        }
+
+        function selectMood(el) {
+            if (el.classList.contains('locked')) return;
+            var cells = document.querySelectorAll('.mood-cell');
+            for (var i = 0; i < cells.length; i++) {
+                cells[i].classList.remove('selected');
+            }
+            el.classList.add('selected');
+            setTimeout(function() { closeMood(); }, 500);
+        }
+
+        document.getElementById('mood-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMood();
+        });
+    </script>
+</body>
+</html>
