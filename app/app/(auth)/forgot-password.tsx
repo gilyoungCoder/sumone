@@ -4,24 +4,24 @@ import {
   KeyboardAvoidingView, Platform, TouchableWithoutFeedback,
   Keyboard, ActivityIndicator,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../constants/colors';
 
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const signIn = useAuthStore((s) => s.signIn);
+  const [sent, setSent] = useState(false);
+  const resetPassword = useAuthStore((s) => s.resetPassword);
 
-  const handleLogin = async () => {
+  const handleReset = async () => {
     setError('');
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    if (!email) {
+      setError('Please enter your email');
       return;
     }
     if (!isValidEmail(email)) {
@@ -29,12 +29,32 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
-    const { error: signInError } = await signIn(email.trim(), password);
+    const { error: resetError } = await resetPassword(email.trim());
     setLoading(false);
-    if (signInError) {
-      setError(signInError);
+    if (resetError) {
+      setError(resetError);
+      return;
     }
+    setSent(true);
   };
+
+  if (sent) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.successEmoji}>💌</Text>
+        <Text style={styles.successTitle}>Check your email</Text>
+        <Text style={styles.successMessage}>
+          We've sent a password reset link to {email}
+        </Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.buttonText}>Back to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -42,13 +62,15 @@ export default function LoginScreen() {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.content}>
-          <Text style={styles.logo}>SumOne</Text>
-          <Text style={styles.subtitle}>Your story, together</Text>
+        <View style={styles.centerContent}>
+          <Text style={styles.title}>Forgot Password?</Text>
+          <Text style={styles.subtitle}>
+            Enter your email and we'll send you a reset link
+          </Text>
 
           <View style={styles.form}>
             <TextInput
-              style={[styles.input, error && !email && styles.inputError]}
+              style={styles.input}
               placeholder="Email"
               placeholderTextColor={Colors.textLight}
               value={email}
@@ -56,43 +78,28 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            <TextInput
-              style={[styles.input, error && !password && styles.inputError]}
-              placeholder="Password"
-              placeholderTextColor={Colors.textLight}
-              value={password}
-              onChangeText={(t) => { setPassword(t); setError(''); }}
-              secureTextEntry
-            />
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
+              onPress={handleReset}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Send Reset Link</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          <Link href="/(auth)/forgot-password" asChild>
-            <TouchableOpacity style={styles.forgotButton}>
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </TouchableOpacity>
-          </Link>
-
-          <Link href="/(auth)/register" asChild>
-            <TouchableOpacity style={styles.linkButton}>
-              <Text style={styles.linkText}>
-                Don't have an account? <Text style={styles.linkBold}>Sign Up</Text>
-              </Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backText}>Back to Sign In</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -104,24 +111,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  content: {
+  centerContent: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  logo: {
-    fontSize: 42,
+  title: {
+    fontSize: 28,
     fontWeight: '700',
-    color: Colors.primary,
+    color: Colors.text,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
   subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 48,
+    marginBottom: 32,
   },
   form: {
     gap: 16,
@@ -135,9 +141,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     borderWidth: 1,
     borderColor: Colors.border,
-  },
-  inputError: {
-    borderColor: Colors.accent,
   },
   errorText: {
     color: Colors.accent,
@@ -159,24 +162,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  forgotButton: {
-    marginTop: 16,
+  backButton: {
+    marginTop: 24,
     alignItems: 'center',
   },
-  forgotText: {
+  backText: {
     fontSize: 14,
     color: Colors.primary,
   },
-  linkButton: {
-    marginTop: 12,
-    alignItems: 'center',
+  successEmoji: {
+    fontSize: 48,
+    textAlign: 'center',
+    marginBottom: 16,
   },
-  linkText: {
-    fontSize: 14,
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  successMessage: {
+    fontSize: 16,
     color: Colors.textSecondary,
-  },
-  linkBold: {
-    color: Colors.primary,
-    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 32,
   },
 });
