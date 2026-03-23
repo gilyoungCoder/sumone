@@ -23,4 +23,19 @@ export const Colors = {
   success: '#4CAF50',
   error: '#FF5252',
   border: '#F0E8E0',        // 부드러운 보더
+
+  // Shadow
+  shadow: '#D4C5B5',         // 부드러운 그림자
+  shadowLight: '#E8DDD3',    // 연한 그림자
+
+  // Overlay
+  overlay: 'rgba(0, 0, 0, 0.3)',       // 모달 배경
+  overlayLight: 'rgba(0, 0, 0, 0.1)',  // 연한 오버레이
+
+  // Gradient (따뜻한 핑크 그라데이션)
+  gradientStart: '#FF8FAB',
+  gradientEnd: '#FFD54F',
+
+  // Highlight
+  highlight: '#FFF0F3',     // 연핑크 하이라이트 배경
 };
