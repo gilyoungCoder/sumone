@@ -59,27 +59,32 @@
 
 ---
 
-## 기술 스택 (프로젝트에 맞게 수정)
-
-> 아직 결정되지 않은 항목은 개발 시작 전에 논의하여 채운다.
+## 기술 스택
 
 | 영역 | 기술 | 비고 |
 |------|------|------|
-| Frontend | TBD | |
-| Backend | TBD | |
-| Database | TBD | |
-| Deployment | TBD | |
-| Testing | TBD | |
+| Frontend | React Native + Expo | 크로스플랫폼, Expo Router |
+| Backend | Supabase | Auth, DB, Storage, Realtime |
+| Database | PostgreSQL (Supabase) | RLS 적용 |
+| State | Zustand | 클라이언트 상태 관리 |
+| Styling | NativeWind (Tailwind) | 빠른 UI 개발 |
 
 ---
 
-## 결정 기록 (Decision Log)
+## 보안 점검 리스트
 
-> 프로젝트에서 내린 중요한 결정을 여기에 기록한다.
+### 매 커밋 전 확인
+1. **환경변수 노출 확인** — `.env` 파일이 `.gitignore`에 포함되어 있는지, Supabase URL/Key가 코드에 하드코딩되지 않았는지 확인
+2. **RLS(Row Level Security) 활성화** — Supabase 모든 테이블에 RLS 정책이 적용되어 있는지 확인. 비활성 상태면 모든 데이터가 공개됨
+3. **사용자 입력 검증** — 텍스트 입력에 XSS/SQL Injection 방지. Supabase 클라이언트는 기본 파라미터화 쿼리를 사용하지만, raw SQL 사용 시 주의
+4. **인증 상태 확인** — 보호된 화면에 비로그인 사용자가 접근할 수 없는지 확인. 커플 데이터는 반드시 해당 커플만 접근 가능
+5. **민감 정보 로그 금지** — `console.log`에 토큰, 비밀번호, 개인정보가 포함되지 않는지 확인. 프로덕션 빌드에서는 로그 제거
 
-| 날짜 | 결정 | 이유 |
-|------|------|------|
-| 2026-03-23 | 하네스 철학 기반 개발 방식 채택 | AI 에이전트와의 효율적 협업을 위해 |
+### 배포 전 확인
+- [ ] Supabase anon key만 클라이언트에 노출 (service_role key 절대 노출 금지)
+- [ ] 모든 API 호출에 인증 토큰 포함
+- [ ] 딥링크/URL 스킴에 민감 정보 미포함
+- [ ] 앱 스토어 개인정보 처리방침 준비
 
 ---
 
