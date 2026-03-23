@@ -39,7 +39,7 @@ export function Input({
       <View style={[styles.inputWrapper, { borderColor }]}>
         {icon && <View style={styles.iconWrapper}>{icon}</View>}
         <TextInput
-          style={[styles.input, icon && styles.inputWithIcon, style]}
+          style={[styles.input, icon ? styles.inputWithIcon : undefined, style]}
           placeholderTextColor={Colors.textLight}
           onFocus={(e) => {
             setFocused(true);
