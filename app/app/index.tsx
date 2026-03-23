@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { Colors } from '../constants/colors';
 
 export default function Index() {
-  const { session, loading } = useAuthStore();
+  const { session, profile, loading } = useAuthStore();
 
   if (loading) {
     return (
@@ -16,6 +16,10 @@ export default function Index() {
 
   if (!session) {
     return <Redirect href="/(auth)/login" />;
+  }
+
+  if (!profile || !profile.avatar_emoji) {
+    return <Redirect href="/(auth)/onboarding" />;
   }
 
   return <Redirect href="/(tabs)/home" />;
