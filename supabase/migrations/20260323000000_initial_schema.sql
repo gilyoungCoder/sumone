@@ -1,6 +1,6 @@
 -- ============================================
 -- Sumone US - Initial Database Schema
--- Tables: couples, profiles, questions, daily_questions, answers
+-- Tables: couples, profiles, questions, daily_questions
 -- All tables have RLS enabled with appropriate policies
 -- ============================================
 
@@ -30,29 +30,25 @@ CREATE TABLE profiles (
 -- Questions catalog
 CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
-  text TEXT NOT NULL,
+  question_text TEXT NOT NULL,
   category TEXT DEFAULT 'general',
-  sort_order INT NOT NULL
+  question_number INT NOT NULL
 );
 
--- Daily question assignment per couple
+-- Daily question assignment per couple (answers stored inline)
 CREATE TABLE daily_questions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   couple_id UUID REFERENCES couples(id) NOT NULL,
   question_id INT REFERENCES questions(id) NOT NULL,
   assigned_date DATE NOT NULL,
+  user1_id UUID REFERENCES auth.users(id),
+  user2_id UUID REFERENCES auth.users(id),
+  user1_answer TEXT,
+  user2_answer TEXT,
+  user1_answered_at TIMESTAMPTZ,
+  user2_answered_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(couple_id, assigned_date)
-);
-
--- Answers to daily questions
-CREATE TABLE answers (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  daily_question_id UUID REFERENCES daily_questions(id) NOT NULL,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  text TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(daily_question_id, user_id)
 );
 
 -- ============================================
@@ -62,7 +58,8 @@ CREATE TABLE answers (
 CREATE INDEX idx_profiles_couple_id ON profiles(couple_id);
 CREATE INDEX idx_couples_invite_code ON couples(invite_code);
 CREATE INDEX idx_daily_questions_couple_date ON daily_questions(couple_id, assigned_date);
-CREATE INDEX idx_answers_daily_question ON answers(daily_question_id);
+CREATE INDEX idx_daily_questions_user1 ON daily_questions(user1_id);
+CREATE INDEX idx_daily_questions_user2 ON daily_questions(user2_id);
 
 -- ============================================
 -- 3. ROW LEVEL SECURITY
@@ -72,7 +69,6 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE couples ENABLE ROW LEVEL SECURITY;
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE answers ENABLE ROW LEVEL SECURITY;
 
 -- Helper: get current user's couple_id
 CREATE OR REPLACE FUNCTION get_my_couple_id()
@@ -132,24 +128,9 @@ CREATE POLICY "daily_questions_select_own_couple" ON daily_questions
 CREATE POLICY "daily_questions_insert_own_couple" ON daily_questions
   FOR INSERT WITH CHECK (couple_id = get_my_couple_id());
 
--- ----- answers -----
-
--- Same couple can read each other's answers
-CREATE POLICY "answers_select_same_couple" ON answers
-  FOR SELECT USING (
-    daily_question_id IN (
-      SELECT id FROM daily_questions WHERE couple_id = get_my_couple_id()
-    )
-  );
-
--- Users can only insert their own answers
-CREATE POLICY "answers_insert_own" ON answers
-  FOR INSERT WITH CHECK (
-    user_id = auth.uid()
-    AND daily_question_id IN (
-      SELECT id FROM daily_questions WHERE couple_id = get_my_couple_id()
-    )
-  );
+-- Only couple members can update their answers
+CREATE POLICY "daily_questions_update_own_couple" ON daily_questions
+  FOR UPDATE USING (couple_id = get_my_couple_id());
 
 -- ============================================
 -- 4. AUTO-CREATE PROFILE ON SIGNUP (trigger)
@@ -163,6 +144,8 @@ BEGIN
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'display_name', 'New User')
   );
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
