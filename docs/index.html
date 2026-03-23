@@ -554,47 +554,61 @@
         const diff = Math.floor((today - startDate) / (1000*60*60*24)) + 1;
         document.querySelector('.dday-number').textContent = diff > 0 ? diff : 1;
 
+        var currentTab = 'home';
+
         function showScreen(name) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
+            }
             document.getElementById(name + '-screen').classList.add('active');
             document.getElementById('tab-bar').style.display = name === 'login' ? 'none' : 'flex';
-            if (name !== 'login') showTab(name);
+            if (name !== 'login') {
+                currentTab = name;
+                highlightTab(name);
+            }
         }
 
         function showTab(name) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(name + '-screen').classList.add('active');
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event?.target?.closest?.('.tab')?.classList.add('active');
-            if (!document.querySelector('.tab.active')) {
-                document.querySelectorAll('.tab')[
-                    name === 'home' ? 0 : name === 'questions' ? 1 : 2
-                ].classList.add('active');
+            currentTab = name;
+            var screens = document.querySelectorAll('.screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].classList.remove('active');
             }
+            document.getElementById(name + '-screen').classList.add('active');
+            highlightTab(name);
+        }
+
+        function highlightTab(name) {
+            var tabs = document.querySelectorAll('.tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            var idx = name === 'home' ? 0 : name === 'questions' ? 1 : 2;
+            tabs[idx].classList.add('active');
         }
 
         function openMood() {
             document.getElementById('mood-overlay').classList.add('active');
         }
 
-        function closeMood(e) {
-            if (!e || e.target === document.getElementById('mood-overlay')) {
-                document.getElementById('mood-overlay').classList.remove('active');
-            }
+        function closeMood() {
+            document.getElementById('mood-overlay').classList.remove('active');
         }
 
         function selectMood(el) {
             if (el.classList.contains('locked')) return;
-            document.querySelectorAll('.mood-cell').forEach(c => c.classList.remove('selected'));
+            var cells = document.querySelectorAll('.mood-cell');
+            for (var i = 0; i < cells.length; i++) {
+                cells[i].classList.remove('selected');
+            }
             el.classList.add('selected');
-            setTimeout(() => closeMood(), 500);
+            setTimeout(function() { closeMood(); }, 500);
         }
 
-        // Smooth transitions
-        document.querySelectorAll('.screen').forEach(s => {
-            s.style.transition = 'opacity 0.3s';
+        document.getElementById('mood-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMood();
         });
-        document.getElementById('pet-message').style.transition = 'opacity 0.3s';
     </script>
 </body>
 </html>
