@@ -1,0 +1,354 @@
+/* Reset & Base */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream: #FFF8F0;
+  --pink: #FFE0EC;
+  --pink-dark: #e8739e;
+  --peach: #FFD4B8;
+  --yellow: #FFF3D4;
+  --text: #3D3D3D;
+  --text-light: #7A7A7A;
+  --bg: #FAFAFA;
+  --radius: 16px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 { line-height: 1.2; }
+
+/* Nav */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.nav-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--pink-dark);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.nav-link:hover { color: var(--pink-dark); }
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 14px 32px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,115,158,0.3); }
+
+.btn-primary {
+  background: var(--pink-dark);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--pink-dark);
+  border: 2px solid var(--pink-dark);
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, var(--cream) 0%, var(--pink) 50%, var(--yellow) 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 60px 40px 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.hero-sub {
+  font-size: 1.2rem;
+  color: var(--text-light);
+  max-width: 520px;
+  margin: 0 auto 32px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Phone mockup */
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 60px;
+}
+
+.phone-mock {
+  width: 280px;
+  height: 500px;
+  background: #fff;
+  border-radius: 36px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-screen {
+  flex: 1;
+  background: linear-gradient(180deg, var(--cream), var(--yellow));
+  border-radius: 20px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mock-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--pink-dark);
+  font-size: 0.9rem;
+}
+
+.mock-heart { font-size: 1.2rem; }
+
+.mock-pet { font-size: 4rem; }
+
+.mock-names {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.mock-question {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  width: 100%;
+  text-align: center;
+}
+
+.mock-q-label {
+  font-size: 0.75rem;
+  color: var(--pink-dark);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.mock-q-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Features */
+.features {
+  padding: 100px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.features h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  transition: transform 0.2s;
+}
+
+.feature-card:hover { transform: translateY(-4px); }
+
+.feature-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+/* How it works */
+.how-it-works {
+  background: var(--cream);
+  padding: 100px 40px;
+  text-align: center;
+}
+
+.how-it-works h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 48px;
+}
+
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.step { flex: 1; min-width: 160px; }
+
+.step-num {
+  width: 48px;
+  height: 48px;
+  background: var(--pink-dark);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin: 0 auto 12px;
+}
+
+.step h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.step p {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+/* Waitlist */
+.waitlist {
+  padding: 100px 40px;
+  text-align: center;
+}
+
+.waitlist h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.waitlist > .waitlist-content > p {
+  color: var(--text-light);
+  margin-bottom: 32px;
+}
+
+.waitlist-form {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.waitlist-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 20px;
+  border: 2px solid #eee;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.waitlist-form input:focus { border-color: var(--pink-dark); }
+
+.waitlist-note {
+  margin-top: 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-height: 1.4em;
+}
+
+/* Footer */
+.footer {
+  background: var(--text);
+  color: #fff;
+  padding: 40px;
+  text-align: center;
+}
+
+.footer-logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--pink);
+}
+
+.footer p {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 2.2rem; }
+  .hero-content { padding: 40px 20px 10px; }
+  .hero-sub { font-size: 1rem; }
+  .features, .how-it-works, .waitlist { padding: 60px 20px; }
+  .nav { padding: 16px 20px; }
+  .steps { gap: 24px; }
+}

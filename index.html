@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sumone US — The Couple App That Brings You Closer</title>
+  <meta name="description" content="Sumone US is a couple app with daily questions, D-day counter, and a virtual pet you raise together.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <nav class="nav">
+      <div class="nav-logo">Sumone</div>
+      <a href="#features" class="nav-link">Features</a>
+    </nav>
+    <div class="hero-content">
+      <h1>Your love,<br>one question at a time.</h1>
+      <p class="hero-sub">Daily questions, shared moments, and a little pet friend — Sumone helps couples grow closer every day.</p>
+      <div class="hero-buttons">
+        <a href="#features" class="btn btn-primary">Explore Features</a>
+        <a href="#waitlist" class="btn btn-secondary">Join Waitlist</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-mock">
+        <div class="phone-screen">
+          <div class="mock-header">
+            <span class="mock-heart">&#10084;</span>
+            <span>Day 365</span>
+          </div>
+          <div class="mock-pet">&#x1F43B;</div>
+          <div class="mock-names">Alex &amp; Jordan</div>
+          <div class="mock-question">
+            <p class="mock-q-label">Today's Question</p>
+            <p class="mock-q-text">What's one thing I do that always makes you smile?</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features">
+    <h2>Everything couples need</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F4AC;</div>
+        <h3>Daily Questions</h3>
+        <p>A new question every day to spark meaningful conversations. See your partner's answer only after you respond.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F4C5;</div>
+        <h3>D-Day Counter</h3>
+        <p>Never forget how long you've been together. Celebrate every milestone with your special someone.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F43E;</div>
+        <h3>Virtual Pet</h3>
+        <p>Raise a cute pet together! Dress it up and decorate your shared room as your love grows.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F517;</div>
+        <h3>Couple Connect</h3>
+        <p>Link with your partner using a simple invite code. Your private space, just for two.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Sign Up</h3>
+        <p>Create your account in seconds</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Invite Partner</h3>
+        <p>Share your invite code</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Answer Together</h3>
+        <p>Respond to daily questions</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Grow Closer</h3>
+        <p>Watch your bond deepen</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Waitlist -->
+  <section id="waitlist" class="waitlist">
+    <div class="waitlist-content">
+      <h2>Coming Soon</h2>
+      <p>Sumone US is launching soon. Be the first to know!</p>
+      <form class="waitlist-form" onsubmit="handleWaitlist(event)">
+        <input type="email" placeholder="your@email.com" required>
+        <button type="submit" class="btn btn-primary">Notify Me</button>
+      </form>
+      <p class="waitlist-note" id="waitlist-msg"></p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">Sumone</div>
+      <p>&copy; 2026 Sumone US. Made with &#10084; for couples.</p>
+    </div>
+  </footer>
+
+  <script>
+    function handleWaitlist(e) {
+      e.preventDefault();
+      var msg = document.getElementById('waitlist-msg');
+      msg.textContent = "Thanks! We'll let you know when we launch.";
+      msg.style.color = '#e8739e';
+      e.target.reset();
+    }
+  </script>
+</body>
+</html>
